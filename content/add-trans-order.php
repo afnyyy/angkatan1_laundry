@@ -1,14 +1,31 @@
 <?php 
+if (empty($_SESSION['click_count'])){
+  $_SESSION['click_count'] = 0;
+}
   if (isset($_POST["save"])) {
-    $level =  $_POST['id_level'];
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $password = sha1($_POST['password']);
+    $trans_code = $_POST['trans_code'];
+    $order_date = $_POST['order_date'];
+    $id_customer = $_POST['id_customer'];
+    $order_end_date = $_POST['order_end_date'];
 
-    $insert = mysqli_query($koneksi,"INSERT INTO users (id_level, name, email, password) VALUES ('$level', '$name', '$email', '$password')");
-    if ($insert){
-      header("location:?page=user&add=success");
-    }
+    $insert = mysqli_query ($koneksi, "INSERT INTO trans_order (`id_customer`, `trans_code`, `order_date`, `order_end_date`) VALUES ('$id_customer', '$trans_code', '$order_date', '$order_end_date')");
+    // if ($insert){
+    //   header("Location:?page=trans-order&add=success");
+    // }
+    $id_order = mysqli_insert_id($koneksi);
+    $qty = isset($_POST['qty']) ? $_POST['qty'] : 0;
+    $notes = isset($_POST['notes']) ? $_POST['notes'] :'';
+    $id_service = isset($_POST['id_service']) ? $_POST['id_service'] : 0;
+
+    for ($i=0; $i < $_POST['countDisplay']; $i++) {
+      $service_name = $_POST['service_name'];
+      $cariId_service = mysqli_query($koneksi,"SELECT id FROM services WHERE service_name = '$service_name'");
+      $rowId_service = mysqli_fetch_assoc($cariId_service);
+      $id_service = $id_service['id'];
+
+      $instOrderDet = mysqli_query($koneksi,"INSERT INTO trans_order_detail(id_order, id_service, `qty`, `notes`) VALUES ('$id_order', '$id_service', '$qty[$i]', '$notes[$i]')");
+   }
+
   }
 
   $id = isset($_GET['edit']) ? $_GET['edit'] : '';
@@ -67,7 +84,7 @@
                   <label for="">Transaction Code</label>
                 </div>
                 <div class="col-sm-5">
-                  <input type="text" class="form-control" name="trans-code" readonly value="<?php echo $kode_transaksi ?>">
+                  <input type="text" class="form-control" name="trans_code" readonly value="<?php echo $kode_transaksi ?>">
                 </div>
               </div>
               <div class="mb-3 row">
@@ -126,6 +143,7 @@
             <div class="col-sm-12">
               <div align="right" class="mb-3">
                 <button type="button" class="btn btn-success btn-sm add-row">Add Row</button>
+                <input type="number" name="countDisplay" id="countDisplay" value="<?php echo $_SESSION['click_count'] ?>" readonly>
               </div>
               <table class="table table-bordered table-order">
                 <thead>
