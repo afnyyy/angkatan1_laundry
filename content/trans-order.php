@@ -42,6 +42,7 @@
                 <td><?php echo $row['status'] ?></td>
                 <td><a href="?page=add-trans-order&detail=<?php echo $row['id']?>" class="btn btn-primary btn-sm" >Detail</a>
                 <a href="?page=trans-order&delete=<?php echo $row['id']?>" onclick="return confirm('Are you sure?')" class="btn btn-danger btn-sm">Delete</a>
+                
                 </td>
               </tr>
             <?php endforeach?>
