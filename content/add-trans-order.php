@@ -13,20 +13,40 @@ if (empty($_SESSION['click_count'])){
     //   header("Location:?page=trans-order&add=success");
     // }
     $id_order = mysqli_insert_id($koneksi);
-    $qty = isset($_POST['qty']) ? $_POST['qty'] : 0;
-    $notes = isset($_POST['notes']) ? $_POST['notes'] :'';
-    $id_service = isset($_POST['id_service']) ? $_POST['id_service'] : 0;
+    $qty = isset($_POST['qty']) ? $_POST['qty'] : [];
+    $notes = isset($_POST['notes']) ? $_POST['notes'] : [];
+    $service_name = isset($_POST['service_name']) ? $_POST['service_name'] : [];
+    $subtotal = $_POST['subtotal'] ? $_POST['subtotal'] : [];
 
+    $total = 0;
     for ($i=0; $i < $_POST['countDisplay']; $i++) {
-      $service_name = $_POST['service_name'];
-      $cariId_service = mysqli_query($koneksi,"SELECT id FROM services WHERE service_name = '$service_name'");
-      $rowId_service = mysqli_fetch_assoc($cariId_service);
-      $id_service = $id_service['id'];
+      $service = $service_name [$i];
+      $cariId_service = mysqli_query($koneksi,"SELECT id FROM services WHERE service_name LIKE '%$service%'");
+      $rowid_service = mysqli_fetch_assoc($cariId_service);
+      $id_service = $rowid_service['id'];
 
-      $instOrderDet = mysqli_query($koneksi,"INSERT INTO trans_order_detail(id_order, id_service, `qty`, `notes`) VALUES ('$id_order', '$id_service', '$qty[$i]', '$notes[$i]')");
-   }
+      $qty_value = $qty[$i];
+      $subtotal_value = $subtotal[$i];
+      $notes_value = $notes[$i];
 
-  }
+      $instOrderDet = mysqli_query($koneksi,"INSERT INTO trans_order_detail(id_order, id_service, qty, subtotal, notes) VALUES ('$id_order', '$id_service', '$qty_value', '$subtotal_value', '$notes_value')");
+
+      $total += ($subtotal_value * $qty_value);
+    }
+
+    
+    $update = mysqli_query($koneksi, "UPDATE trans_order SET total='$total' WHERE id = '$id_order'");
+}
+  // $id = isset($_GET['edit']) ? $_GET['edit'] : '';
+
+
+  //     $updtTransTotal = mysqli_query($koneksi, "SELECT SUM(subtotal) as totall, SUM(qty) as qtyT FROM trans_order_detail WHERE id_order = '$id_order' AND id_service = '$id_service'");
+  //       $rowTransTotal = mysqli_fetch_assoc($updtTransTotal);
+
+  //       $total = $rowTransTotal['totall'] * $rowTransTotal['qtyT'];
+
+
+
 
   $id = isset($_GET['edit']) ? $_GET['edit'] : '';
   $queryEdit = mysqli_query($koneksi, "SELECT * FROM users WHERE id = '$id'");
@@ -54,6 +74,9 @@ if (empty($_SESSION['click_count'])){
 
   $queryCustomers = mysqli_query($koneksi, "SELECT * FROM customers ORDER BY id DESC");
   $rowCustomers = mysqli_fetch_all($queryCustomers, MYSQLI_ASSOC);
+
+  $queryServies = mysqli_query($koneksi, "SELECT * FROM services ORDER BY id DESC");
+  $rowServices = mysqli_fetch_all($queryServies, MYSQLI_ASSOC);
 
   //TR032125001
   $queryTrans = mysqli_query($koneksi, "SELECT max(id) as id_trans FROM trans_order");
@@ -102,9 +125,9 @@ if (empty($_SESSION['click_count'])){
                 </div>
                 <div class="col-sm-5">
                   <select id="id_service" class="form-control" name="service">
-                    <option value="" hidden>Choose Service</option>
+                    <option value="0" hidden>Choose Service</option>
                     <?php foreach ($rowServices as $rowService) { ?>
-                      <option value="<?php echo $rowService['id']?>"><?php echo $rowService['service_name']?></option>
+                      <option value="<?php echo $rowService['id']?>" data-price="<?php echo $rowService['service_price'] ?>"><?php echo $rowService['service_name']?></option>
                     <?php } ?>
 
                   </select>
@@ -148,6 +171,7 @@ if (empty($_SESSION['click_count'])){
               <table class="table table-bordered table-order">
                 <thead>
                   <tr>
+                    <th>No</th>
                     <th>Service</th>
                     <th>Price</th>
                     <th>Qty</th>
